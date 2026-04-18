@@ -223,7 +223,7 @@ function App() {
       const expectancy = calcTradeExpectancy(result.decision, price, tradeSize, result.confidence);
 
       const baseTx = {
-        market: market.question, action: result.decision,
+        market: market.question, endDate: market.endDate, action: result.decision,
         outcome: market.outcomes[outcomeIndex] ?? result.decision,
         price, size: tradeSize, cost: tradeCost,
         confidence: result.confidence,

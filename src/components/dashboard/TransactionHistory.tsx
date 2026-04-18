@@ -64,6 +64,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
                     {[
                       { label: 'Time', tooltip: 'When the AI executed the trade' },
                       { label: 'Market', tooltip: 'The prediction market being analyzed' },
+                      { label: 'Payout', tooltip: 'When this market officially resolves and pays out winners' },
                       { label: 'Side', tooltip: 'BUY or SELL action' },
                       { label: 'Exp. Return', tooltip: 'Expected Profit: How much we stand to make if the prediction is correct' },
                       { label: 'Max Loss', tooltip: 'Cost: How much we spent and stand to lose if the prediction is incorrect' },
@@ -95,6 +96,9 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
                       >
                         <td style={{ padding: '0.35rem 0.5rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: '0.68rem' }}>{tx.timestamp}</td>
                         <td style={{ padding: '0.35rem 0.5rem', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tx.market}>{tx.market}</td>
+                        <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '0.65rem' }}>
+                          {tx.endDate ? new Date(tx.endDate).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'TBD'}
+                        </td>
                         <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: ACTION_COLORS[tx.action], fontWeight: 700 }}>{tx.action}</td>
                         <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: 'var(--green)', fontFamily: 'monospace' }}>
                           +${(tx.expectedProfit ?? 0).toFixed(2)}

@@ -16,6 +16,7 @@ export interface Transaction {
   id: string;
   timestamp: string;
   market: string;
+  endDate?: string;
   action: 'BUY' | 'SELL' | 'HOLD';
   outcome: string;
   price: number;
