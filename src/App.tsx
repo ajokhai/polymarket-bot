@@ -101,22 +101,6 @@ function App() {
   }, [creds, isDemo, refreshBalance]);
 
   // Fetch once on mount, then poll only while agent is live
-  useEffect(() => {
-    const loadMarkets = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchMarkets({ active: true, limit: 50 });
-        const sorted = [...data].sort((a, b) => b.volume - a.volume);
-        setMarkets(sorted);
-        if (!selectedMarket || !sorted.find(m => m.id === selectedMarket.id)) {
-          setSelectedMarket(sorted[0] ?? null);
-        }
-      } catch (err) {
-        console.error('Market load failed', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
   const fetchMarketsManual = useCallback(async () => {
     setIsLoading(true);
     try {
