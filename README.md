@@ -1,4 +1,4 @@
-# Polymarket AI Trading Agent `v1.1.0`
+# Polymarket AI Trading Agent `v1.1.1`
 
 An autonomous prediction market trading agent for [Polymarket](https://polymarket.com) powered by Google Gemini. The agent discovers markets, analyzes them using a configurable AI directive, and executes trades — all gasless via Polymarket's order relayer.
 
