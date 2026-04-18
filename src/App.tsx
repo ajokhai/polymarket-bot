@@ -60,9 +60,17 @@ function App() {
   const displayBalance = isDemo ? demoBalance : balance;
   const startingBalance = isDemo ? demoStartingBalanceRef.current : startingBalanceRef.current;
 
-  const liveRef = useRef({ creds, tuning, isDemo, markets, marketIndex, selectedMarket, balance, demoBalance, transactions });
+  const [marketTab, setMarketTab] = useState<'active' | 'traded'>('active');
+
+  const tradedMarketTitles = new Set(transactions.filter(t => t.action !== 'HOLD').map(t => t.market));
+  const activeMarkets = markets.filter(m => !tradedMarketTitles.has(m.question));
+  const tradedMarkets = markets.filter(m => tradedMarketTitles.has(m.question));
+
+  const displayMarkets = marketTab === 'active' ? activeMarkets : tradedMarkets;
+
+  const liveRef = useRef({ creds, tuning, isDemo, activeMarkets, marketIndex, selectedMarket, balance, demoBalance, transactions });
   useEffect(() => {
-    liveRef.current = { creds, tuning, isDemo, markets, marketIndex, selectedMarket, balance, demoBalance, transactions };
+    liveRef.current = { creds, tuning, isDemo, activeMarkets, marketIndex, selectedMarket, balance, demoBalance, transactions };
   });
 
   const addLog = useCallback((type: LogEntry['type'], message: string) => {
@@ -100,18 +108,35 @@ function App() {
         const data = await fetchMarkets({ active: true, limit: 50 });
         const sorted = [...data].sort((a, b) => b.volume - a.volume);
         setMarkets(sorted);
-        setSelectedMarket(prev => prev ?? sorted[0] ?? null);
+        if (!selectedMarket || !sorted.find(m => m.id === selectedMarket.id)) {
+          setSelectedMarket(sorted[0] ?? null);
+        }
       } catch (err) {
         console.error('Market load failed', err);
       } finally {
         setIsLoading(false);
       }
     };
-    loadMarkets();
+  const fetchMarketsManual = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchMarkets({ active: true, limit: 50 });
+      const sorted = [...data].sort((a, b) => b.volume - a.volume);
+      setMarkets(sorted);
+      addLog('info', 'Markets manually refreshed.');
+    } catch (err) {
+      console.error('Market load failed', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addLog]);
+
+  useEffect(() => {
+    fetchMarketsManual();
     if (!isLive) return;
-    const t = setInterval(loadMarkets, 60_000);
+    const t = setInterval(fetchMarketsManual, 60_000);
     return () => clearInterval(t);
-  }, [isLive]);
+  }, [isLive, fetchMarketsManual]);
 
   const handleCredsComplete = (data: Credentials) => {
     localStorage.setItem(CREDS_KEY, JSON.stringify(data));
@@ -139,7 +164,7 @@ function App() {
     if (!isLive || !creds) return;
 
     const runTurn = async () => {
-      const { creds: c, tuning: t, isDemo: demo, markets: mList, marketIndex: mIdx, balance: bal, demoBalance: demoBal, transactions: txList } = liveRef.current;
+      const { creds: c, tuning: t, isDemo: demo, activeMarkets: mList, marketIndex: mIdx, balance: bal, demoBalance: demoBal, transactions: txList } = liveRef.current;
       if (!c || mList.length === 0) return;
 
       // Enforce cumulative budget cap — stop the agent when total spend hits maxBudget
@@ -302,27 +327,50 @@ function App() {
       <div className="dashboard-grid">
         <main>
           <div className="glass market-panel">
-            <div className="panel-header">
-              <h3>
-                Markets
+            <div className="panel-header" style={{ marginBottom: '0.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <h3 style={{ margin: 0 }}>Markets</h3>
                 {tuning.autoRotate && isLive && (
                   <span className="scanning-badge">
-                    SCANNING #{(marketIndex % Math.max(markets.length, 1)) + 1}
+                    SCANNING #{(marketIndex % Math.max(activeMarkets.length, 1)) + 1}
                   </span>
                 )}
-              </h3>
-              {isLoading && <span className="loading-text">Refreshing…</span>}
+                {isLoading && <span className="loading-text" style={{ marginLeft: '0.5rem' }}>Refreshing…</span>}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="icon-btn" onClick={() => {
+                  setTuning(prev => ({ ...prev, autoRotate: false }));
+                  setMarketIndex(prev => Math.max(0, prev - 1));
+                  setSelectedMarket(displayMarkets[Math.max(0, marketIndex - 1)] ?? null);
+                }} title="Previous Market">{'<'}</button>
+                <button className="icon-btn" onClick={() => {
+                  setTuning(prev => ({ ...prev, autoRotate: false }));
+                  setMarketIndex(prev => prev + 1);
+                  setSelectedMarket(displayMarkets[(marketIndex + 1) % displayMarkets.length] ?? null);
+                }} title="Next Market">{'>'}</button>
+                <button className="icon-btn" onClick={fetchMarketsManual} title="Refresh Markets">↻ Refresh</button>
+              </div>
             </div>
-            {markets.length === 0 && !isLoading
-              ? <p className="empty-state">No markets found. Check your connection.</p>
+
+            <div className="tabs-container">
+              <div className={`tab ${marketTab === 'active' ? 'active' : ''}`} onClick={() => setMarketTab('active')}>
+                Active Queue ({activeMarkets.length})
+              </div>
+              <div className={`tab ${marketTab === 'traded' ? 'active' : ''}`} onClick={() => setMarketTab('traded')}>
+                Already Traded ({tradedMarkets.length})
+              </div>
+            </div>
+
+            {displayMarkets.length === 0 && !isLoading
+              ? <p className="empty-state">No markets found in this view.</p>
               : (
                 <div className="markets-grid">
-                  {markets.map((m, i) => (
+                  {displayMarkets.map((m, i) => (
                     <MarketCard
                       key={m.id} market={m}
                       isSelected={selectedMarket?.id === m.id}
-                      isActive={tuning.autoRotate && isLive && (marketIndex % markets.length) === i}
-                      onSelect={m => { setSelectedMarket(m); setMarketIndex(markets.indexOf(m)); }}
+                      isActive={marketTab === 'active' && tuning.autoRotate && isLive && (marketIndex % displayMarkets.length) === i}
+                      onSelect={m => { setSelectedMarket(m); setMarketIndex(displayMarkets.indexOf(m)); }}
                     />
                   ))}
                 </div>

@@ -60,12 +60,20 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.73rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Time', 'Market', 'Side', 'Exp. Return', 'Max Loss', 'EV', 'Status'].map((h, i) => (
-                      <th key={h} style={{
+                    {[
+                      { label: 'Time', tooltip: 'When the AI executed the trade' },
+                      { label: 'Market', tooltip: 'The prediction market being analyzed' },
+                      { label: 'Side', tooltip: 'BUY or SELL action' },
+                      { label: 'Exp. Return', tooltip: 'Expected Profit: How much we stand to make if the prediction is correct' },
+                      { label: 'Max Loss', tooltip: 'Cost: How much we spent and stand to lose if the prediction is incorrect' },
+                      { label: 'EV', tooltip: 'Expected Value: The mathematical viability of the trade factoring in the AI confidence vs market price' },
+                      { label: 'Status', tooltip: 'The state of the transaction on the network' }
+                    ].map((col, i) => (
+                      <th key={col.label} data-tooltip={col.tooltip} style={{
                         padding: '0.25rem 0.5rem', fontWeight: 600, fontSize: '0.62rem',
                         letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)',
-                        textAlign: i <= 1 ? 'left' : 'right',
-                      }}>{h}</th>
+                        textAlign: i <= 1 ? 'left' : 'right', cursor: 'help'
+                      }}>{col.label}</th>
                     ))}
                   </tr>
                 </thead>
