@@ -332,7 +332,8 @@ input[type="range"]::-moz-range-thumb {
 [data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: 120%;
+  top: calc(100% + 8px);
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface-2);
