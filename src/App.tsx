@@ -159,6 +159,23 @@ function App() {
     addLog('info', `Experiment reset. Balance restored to $${demoStartingBalanceRef.current.toFixed(2)}.`);
   }, [addLog]);
 
+  const handleSelectTransaction = useCallback((tx: Transaction) => {
+    const market = markets.find(m => m.question === tx.market);
+    if (!market) return;
+    
+    setTuning(prev => ({ ...prev, autoRotate: false }));
+    const isTraded = tradedMarketTitles.has(market.question);
+    const tab = isTraded ? 'traded' : 'active';
+    setMarketTab(tab);
+    
+    const displayMs = tab === 'active' ? activeMarkets : tradedMarkets;
+    const index = displayMs.findIndex(m => m.id === market.id);
+    if (index >= 0) {
+      setMarketIndex(index);
+    }
+    setSelectedMarket(market);
+  }, [markets, tradedMarketTitles, activeMarkets, tradedMarkets]);
+
   // ─── Main Autonomous Decision Loop ──────────────────────────────────────────
   useEffect(() => {
     if (!isLive || !creds) return;
@@ -377,7 +394,7 @@ function App() {
               )}
           </div>
           <BrainFeed logs={logs} />
-          <TransactionHistory transactions={transactions} onClear={handleClearTx} />
+          <TransactionHistory transactions={transactions} onClear={handleClearTx} onSelectTransaction={handleSelectTransaction} />
         </main>
 
         <aside>

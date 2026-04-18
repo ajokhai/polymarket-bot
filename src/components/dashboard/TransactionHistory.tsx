@@ -4,6 +4,7 @@ import { Transaction } from '../../services/polymarket/portfolio';
 interface TransactionHistoryProps {
   transactions: Transaction[];
   onClear: () => void;
+  onSelectTransaction?: (tx: Transaction) => void;
 }
 
 const STATUS_COLORS: Record<Transaction['status'], string> = {
@@ -19,7 +20,7 @@ const ACTION_COLORS: Record<string, string> = {
   HOLD: 'var(--text-muted)',
 };
 
-export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, onClear }) => {
+export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, onClear, onSelectTransaction }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const { totalCost, totalEV } = useMemo(() => {
@@ -81,7 +82,17 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transact
                   {transactions.map(tx => {
                     const evPositive = tx.ev >= 0;
                     return (
-                      <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <tr 
+                        key={tx.id} 
+                        onClick={() => onSelectTransaction?.(tx)}
+                        style={{ 
+                          borderBottom: '1px solid rgba(255,255,255,0.04)',
+                          cursor: onSelectTransaction ? 'pointer' : 'default',
+                          transition: 'background 0.1s'
+                        }}
+                        onMouseEnter={e => { if(onSelectTransaction) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
                         <td style={{ padding: '0.35rem 0.5rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: '0.68rem' }}>{tx.timestamp}</td>
                         <td style={{ padding: '0.35rem 0.5rem', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tx.market}>{tx.market}</td>
                         <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: ACTION_COLORS[tx.action], fontWeight: 700 }}>{tx.action}</td>
