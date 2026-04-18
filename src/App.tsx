@@ -11,6 +11,7 @@ import { getClobClient, cancelAllOrders } from './services/polymarket/clob';
 import { fetchUSDCBalance, getWalletAddress, loadTransactions, saveTransaction, clearTransactions, calcTradeExpectancy, Transaction } from './services/polymarket/portfolio';
 import { Side, OrderType } from '@polymarket/clob-client';
 import type { TickSize } from '@polymarket/clob-client';
+import pkg from '../package.json';
 
 const CREDS_KEY = 'pm_agent_creds';
 const DEMO_STARTING_BALANCE = 1000;
@@ -250,7 +251,10 @@ function App() {
     <div className="app-container fade-in">
       <header className="app-header">
         <div>
-          <h1>Polymarket Agent</h1>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <h1>Polymarket Agent</h1>
+            <span style={{ fontSize: '0.7rem', opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>v{pkg.version}</span>
+          </div>
           <div className="status-row">
             <span className={`status-dot ${isLive ? 'status-dot--live' : ''}`} />
             <span className="status-text">
