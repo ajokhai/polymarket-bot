@@ -132,6 +132,51 @@ const ConfirmedInput: React.FC<{
 const formatInterval = (s: number) =>
   s < 60 ? `${s}s` : s < 3600 ? `${(s / 60).toFixed(0)}m` : `${(s / 3600).toFixed(1)}h`;
 
+const IntervalInput: React.FC<{ params: TuningParams, onChange: (p: TuningParams) => void }> = ({ params, onChange }) => {
+  const [draft, setDraft] = useState(String(params.interval));
+  const dirty = draft !== String(params.interval);
+
+  const apply = () => {
+    const v = parseInt(draft, 10);
+    if (!isNaN(v) && v >= 3) {
+      onChange({ ...params, interval: v });
+    }
+  };
+
+  return (
+    <div className="tuning-row">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.35rem' }}>
+        <label style={{ marginBottom: 0 }}>Scan Interval: {formatInterval(params.interval)}</label>
+      </div>
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+        <input
+          type="number" min="3" max="86400" value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && apply()}
+          style={{ marginBottom: 0, flex: 1, padding: '0.4rem 0.75rem' }}
+        />
+        <button
+          onClick={apply}
+          disabled={!dirty || draft === ''}
+          style={{
+            padding: '0.4rem 0.7rem', fontSize: '0.72rem', fontWeight: 700,
+            background: dirty && draft !== '' ? 'var(--accent)' : 'rgba(255,255,255,0.06)',
+            color: dirty && draft !== '' ? '#05080f' : 'var(--text-muted)',
+            border: '1px solid ' + (dirty && draft !== '' ? 'var(--accent)' : 'var(--border)'),
+            borderRadius: 'var(--radius-sm)', cursor: dirty && draft !== '' ? 'pointer' : 'default',
+            transition: 'all 0.15s', whiteSpace: 'nowrap',
+          }}
+        >Set Interval</button>
+      </div>
+      <input type="range" min="3" max="3600" step="1" value={Math.min(parseInt(draft) || 3, 3600)}
+        onChange={e => {
+          setDraft(e.target.value);
+        }} />
+      <p className="hint">3s–3600s via slider; click "Set Interval" to apply.</p>
+    </div>
+  );
+};
+
 export const TuningPanel: React.FC<TuningPanelProps> = ({ params, onChange, balance, isDemo, onSetDemoBalance }) => {
   const effectiveBudget = params.maxBudget === 0 ? balance : Math.min(params.maxBudget, balance);
 
@@ -174,19 +219,7 @@ export const TuningPanel: React.FC<TuningPanelProps> = ({ params, onChange, bala
         </select>
       </div>
 
-      <div className="tuning-row">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.35rem' }}>
-          <label style={{ marginBottom: 0 }}>Scan Interval: {formatInterval(params.interval)}</label>
-          <input
-            type="number" min="5" max="86400" value={params.interval}
-            onChange={e => onChange({ ...params, interval: Math.max(5, parseInt(e.target.value) || 30) })}
-            style={{ width: '64px', marginBottom: 0, padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-          />
-        </div>
-        <input type="range" min="5" max="3600" step="5" value={Math.min(params.interval, 3600)}
-          onChange={e => onChange({ ...params, interval: parseInt(e.target.value) })} />
-        <p className="hint">5s–3600s via slider; or type any value in seconds.</p>
-      </div>
+      <IntervalInput params={params} onChange={onChange} />
 
       <div className="tuning-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
